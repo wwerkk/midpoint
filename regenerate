@@ -1,0 +1,1 @@
+python3 /Users/wwerkowicz/supercollider/tools/cmake_gen/generate_server_plugin_cmake.py -P "Midpoint" -p "plugins/Midpoint" -a "W K Werkowicz"
