@@ -66,6 +66,7 @@ void Midpoint::next(int nSamples) {
     const float *depth = in(1);
     const float *spread = in(2);
     const float *reduction = in(3);
+    int lerp = in0(4);
 
     double freqmul = mFreqMul;
     float phase = mPhase;
@@ -89,7 +90,14 @@ void Midpoint::next(int nSamples) {
 
         }
         int ix = int(phase * mSize);
-        float z = buf[ix];
+        float z = 0.;
+        if (lerp) {
+        float frac = sc_frac(phase * mSize);
+        // ensure the index does not exceed buffer boundaries
+        z = lininterp(frac, buf[ix], buf[(ix + 1 ) % mSize]);
+        } else {
+            z = buf[ix];
+        }
         float freq_ = freq[(inRate(0) != calc_ScalarRate) * i];
         
         phase += freq_ * mFreqMul;
@@ -98,7 +106,6 @@ void Midpoint::next(int nSamples) {
 
 
     mPhase = phase;
-
 }
 
 void Midpoint::subdiv(float* b, int size, float spread) {
