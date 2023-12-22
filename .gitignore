@@ -1,5 +1,5 @@
 .vimrc
-
+.vscode
 build*
 
 .DS_Store
