@@ -23,7 +23,7 @@ private:
     // Calc function
     void next(int nSamples);
 
-    void subdiv(float* b, int size, float spread);
+    void subdiv(float* b, float* b_, int size, float spread);
     // void rSubdiv(World *mWorld, const float* input, float* output, int inputSize, int depth);
 
     // Member variables
@@ -34,10 +34,12 @@ private:
     double mFreqMul; // a constant for multiplying frequency
 
     int mSize;
-    int mDepth;
+    int mSize_;
+    float mDepth;
     float mSpread;
     float mReduction;
     float* buf;
+    float* buf_; // copy to keep past version of the buffer
 };
 
 } // namespace Midpoint

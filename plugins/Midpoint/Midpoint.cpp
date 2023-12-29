@@ -18,8 +18,9 @@ Midpoint::Midpoint() {
     mSpread = in0(2);
     // get reduction param
     mReduction = in0(3);
-    // allocate and fill the buffer
-    buf = (float*) RTAlloc(mWorld, 8192 * sizeof(float));
+    // allocate and fill the buffers
+    buf = (float*) RTAlloc(mWorld, 4096 * sizeof(float));
+    buf_ = (float*) RTAlloc(mWorld, 4096 * sizeof(float));
 
     if (buf == NULL) {
         mCalcFunc = make_calc_function<Midpoint, &Midpoint::clear>();
@@ -29,7 +30,16 @@ Midpoint::Midpoint() {
         }
         return;
     }
-    memset(buf, 0, 8192 * sizeof(float));
+    if (buf_ == NULL) {
+        mCalcFunc = make_calc_function<Midpoint, &Midpoint::clear>();
+        clear(1);
+        if(mWorld->mVerbosity > -2) {
+            Print("Failed to allocate memory for Midpoint ugen.\n");
+        }
+        return;
+    }
+    memset(buf, 0, 4096 * sizeof(float));
+    memset(buf_, 0, 4096 * sizeof(float));
     // Initialize first and last elements
     buf[0] = 0;
     buf[1] = 1;
@@ -38,9 +48,11 @@ Midpoint::Midpoint() {
     buf[4] = 0;
     // init size
     mSize = 5;
+    mSize_ = 5;
+    Copy(mSize, buf_, buf);
     // run midpoint displacement
-    for (int i = 0; i < mDepth; ++i) {
-        subdiv(buf, mSize, mSpread * powf(mReduction, i));
+    for (int i = 0; i < ceilf(mDepth); ++i) {
+        subdiv(buf, buf_, mSize, mSpread * powf(mReduction, i));
     }
     
     // start with phase at 0
@@ -53,6 +65,7 @@ Midpoint::Midpoint() {
 Midpoint::~Midpoint() {
     // Free the memory.
     RTFree(mWorld, buf);
+    RTFree(mWorld, buf_);
 }
 
 void Midpoint::clear(int inNumSamples) {
@@ -84,34 +97,47 @@ void Midpoint::next(int nSamples) {
             buf[4] = 0;
             mSize = 5;
 
-            for (int i = 0; i < mDepth; ++i) {
-                subdiv(buf, mSize, mSpread * powf(mReduction, i));
+            for (int i = 0; i < ceilf(mDepth); ++i) {
+                subdiv(buf, buf_, mSize, mSpread * powf(mReduction, i));
             }
 
         }
         int ix = int(phase * mSize);
         float z = 0.;
+        int ix_ = int(phase * mSize_);
+        float z_ = 0.;
         if (lerp) {
-        float frac = sc_frac(phase * mSize);
-        // ensure the index does not exceed buffer boundaries
-        z = lininterp(frac, buf[ix], buf[(ix + 1 ) % mSize]);
+            float frac = sc_frac(phase * mSize);
+            float frac_ = sc_frac(phase * mSize_);
+            // ensure the index does not exceed buffer boundaries
+            z = lininterp(frac, buf[ix], buf[(ix + 1 ) % mSize]);
+            z_ = lininterp(frac_, buf_[ix_], buf_[(ix_ + 1 ) % mSize_]);
         } else {
             z = buf[ix];
+            z_ = buf_[ix_];
         }
+
         float freq_ = freq[(inRate(0) != calc_ScalarRate) * i];
-        
         phase += freq_ * mFreqMul;
-        outBuf[i] = z;
+
+        outBuf[i] = lininterp(sc_frac(mDepth), z_, z);
     }
 
 
     mPhase = phase;
 }
 
-void Midpoint::subdiv(float* b, int size, float spread) {
-    if (size * 2 - 1 > 8192) return;
-    float* tmp = (float*) RTAlloc(mWorld, (8192) * sizeof(float));
-    memset(tmp, 0, 8192 * sizeof(float));
+void Midpoint::subdiv(float* b, float* b_, int size, float spread) {
+    if (size * 2 - 1 > 4096) {
+        // Print("Max size reached\n");
+        return;
+    }
+
+    // Copy the previous state of the buffer into buf_
+    Copy(size, b_, b);
+
+    float* tmp = (float*) RTAlloc(mWorld, (4096) * sizeof(float));
+    memset(tmp, 0, 4096 * sizeof(float));
 
     // Calculate midpoints with spread and store them in tmp
     for (int i = 0; i < size - 1; ++i) {
@@ -135,7 +161,7 @@ void Midpoint::subdiv(float* b, int size, float spread) {
     RTFree(mWorld, tmp);
 
     // Update mSize
-    mSize -= 1;
+    mSize_ = mSize;
     mSize = size * 2 - 1;
 
 }
