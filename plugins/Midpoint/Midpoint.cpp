@@ -84,7 +84,10 @@ void Midpoint::next(int nSamples) {
     float phase = mPhase;
 
     for (int i=0; i < nSamples; ++i) {
-        while (phase >= 2.f) phase -= 1.f;
+        float phase_abs = sc_abs(phase);
+        while(phase_abs >= 2.f || phase_abs <= -1.f) {
+            phase -= 1.f * sc_sign(phase);
+        }
         if (phase >= 1.f) {
             phase -= 1.f;
             mDepth = depth[(inRate(1) != calc_ScalarRate) * i];
@@ -101,8 +104,7 @@ void Midpoint::next(int nSamples) {
                 subdiv(buf, buf_, mSize, mSpread * powf(mReduction, i));
             }
         }
-        
-        while (phase <= -2.f) phase += 1.f;
+
         if (phase <= 0.f) {
             phase += 1.f;
             mDepth = depth[(inRate(1) != calc_ScalarRate) * i];
