@@ -16,8 +16,8 @@ jobs:
           - name: macOS
             os: macos-latest
 
-          - name: Linux-x64
-            os: ubuntu-latest
+          # - name: Linux-x64
+            # os: ubuntu-latest
 
           - name: Windows-x64
             os: windows-latest
