@@ -84,7 +84,7 @@ void Midpoint::next(int nSamples) {
     float phase = mPhase;
 
     for (int i=0; i < nSamples; ++i) {
-        phase = sc_wrap(phase, -1.f, 2.f)
+        phase = sc_wrap(phase, -1.f, 2.f);
         if (phase >= 1.f) {
             phase -= 1.f;
             mDepth = depth[(inRate(1) != calc_ScalarRate) * i];
