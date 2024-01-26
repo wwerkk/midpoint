@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: macOS
+          - name: macOS-universal
             os: macos-latest
 
           # - name: Linux-x64
@@ -45,6 +45,13 @@ jobs:
       run: cmake -E make_directory $BUILD_PATH
 
     - name: Configure CMake
+      if: runner.os == 'macOS-universal'
+      shell: bash
+      working-directory: ${{ env.BUILD_PATH }}
+      run: cmake .. -DCMAKE_BUILD_TYPE='Release' -DSC_PATH="$SC_PATH" -DCMAKE_INSTALL_PREFIX="$INSTALL_PATH" -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+
+    - name: Configure CMake
+      if: runner.os != 'macOS-universal'
       shell: bash
       working-directory: ${{ env.BUILD_PATH }}
       run: cmake .. -DCMAKE_BUILD_TYPE='Release' -DSC_PATH="$SC_PATH" -DCMAKE_INSTALL_PREFIX="$INSTALL_PATH"
