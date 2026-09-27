@@ -2,7 +2,7 @@
 
 Author: W K Werkowicz
 
-Midpoint displacement algorithm implementation
+Midpoint displacement algorithm implemented as a real-time non-standard synthesis method.
 
 ### Requirements
 
